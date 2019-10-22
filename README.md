@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+
 # csc2547-project
-=======
+
 # VAAL in PyTorch
 
 Original Pytorch implementation of "Variational Adversarial Active Learning" (ICCV 2019 **Oral**). [Link to the paper.](https://arxiv.org/abs/1904.00370)
@@ -54,4 +54,4 @@ The entire codebase is under BSD 2-Clause License.
 
 ## Contact
 If there are any questions or concerns feel free to send a message at samarth.sinha@mail.utoronto.ca
->>>>>>> b87c4028c7f0a2e2d687d891c19f701514d41a51
+
