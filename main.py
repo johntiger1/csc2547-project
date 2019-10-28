@@ -109,6 +109,14 @@ def main(args):
     torch.save(accuracies, os.path.join(args.out_path, args.log_name))
 
 if __name__ == '__main__':
-    args = arguments.get_args()
-    main(args)
+    import datetime
+
+    with open("myfile.txt", "w") as file:
+        file.write("starting", datetime.datetime.now())
+        args = arguments.get_args()
+        main(args)
+        file.write("Finished it all!", datetime.datetime.now())
+
+
+
 
