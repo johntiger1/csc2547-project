@@ -112,10 +112,10 @@ if __name__ == '__main__':
     import datetime
 
     with open("myfile.txt", "w") as file:
-        file.write("starting", datetime.datetime.now())
+        file.write("starting {}".format( datetime.datetime.now()))
         args = arguments.get_args()
         main(args)
-        file.write("Finished it all!", datetime.datetime.now())
+        file.write("Finished it all! {}".format( datetime.datetime.now()))
 
 
 
