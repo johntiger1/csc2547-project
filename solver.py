@@ -34,7 +34,11 @@ class Solver:
                 for img, _, _ in dataloader:
                     yield img
 
-
+    '''
+    Now, we will simply run a new task model at the very end, that takes the EMBEDDINGS as inputs. 
+    And check the performance.
+    We can also: train this jointly. But that can be investigated later
+    '''
     def train(self, querry_dataloader, task_model, vae, discriminator, unlabeled_dataloader):
         labeled_data = self.read_data(querry_dataloader)
         unlabeled_data = self.read_data(unlabeled_dataloader, labels=False)
@@ -74,11 +78,11 @@ class Solver:
                 labels = labels.cuda()
 
             # task_model step
-            preds = task_model(labeled_imgs)
-            task_loss = self.ce_loss(preds, labels)
-            optim_task_model.zero_grad()
-            task_loss.backward()
-            optim_task_model.step()
+            # preds = task_model(labeled_imgs)
+            # task_loss = self.ce_loss(preds, labels)
+            # optim_task_model.zero_grad()
+            # task_loss.backward()
+            # optim_task_model.step()
 
             # VAE step
             for count in range(self.args.num_vae_steps):
@@ -148,7 +152,7 @@ class Solver:
                         unlabeled_imgs = unlabeled_imgs.cuda()
                         labels = labels.cuda()
 
-                
+
 
             if iter_count % 1000 == 0:
                 print('Current training iteration: {}'.format(iter_count))
@@ -156,7 +160,45 @@ class Solver:
                 print('Current vae model loss: {:.4f}'.format(total_vae_loss.item()))
                 print('Current discriminator model loss: {:.4f}'.format(dsc_loss.item()))
 
+        # We need to generate the embeddings, and the dataset to do iteration over
+
+        labeled_data = self.read_data(querry_dataloader)
+
+        for i, labeled_data_batch in enumerate(labeled_data ): # just need to encode these guys
+            labeled_imgs, labels =  labeled_data_batch
+            recon, z, mu, logvar = vae(labeled_imgs)
+            # we can easily just do the inference here, and then keep doing this in turn
+
+
+        # train the task model on the embeddings (of the labelled data)
+        # also need to run for several epochs.
+
+        NUM_EPOCHS = 25
+        for e in range(NUM_EPOCHS):
+            for i, labeled_data_batch in enumerate(labeled_data):
+                labeled_imgs, labels =  labeled_data_batch
+                # run the encoder VAE to get the labels again ()
+                recon, z, mu, logvar = vae(labeled_imgs)
+
+                print(mu.shape, logvar.size())
+
+                # now, we just need to train a classifier on these datapoints; also need to associate the labels then
+                # compute loss
+
+                X = torch.cat((mu, logvar),1) #assuming batch size first, ambient space dimension second
+                y = labels
+
+                preds = task_model(X)
+                task_loss = self.ce_loss(preds, labels)
+
+                optim_task_model.zero_grad()
+                task_loss.backward()
+                optim_task_model.step()
+
         final_accuracy = self.test(task_model)
+
+
+
         return final_accuracy, vae, discriminator
 
 
