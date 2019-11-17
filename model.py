@@ -71,7 +71,7 @@ class VAE(nn.Module):
 
     def reparameterize(self, mu, logvar):
         stds = (0.5 * logvar).exp()
-        epsilon = torch.randn(*mu.size())
+        epsilon = torch.randn(*mu.size()) #sample randomly! (here, we should get right before)
         if mu.is_cuda:
             stds, epsilon = stds.cuda(), epsilon.cuda()
         latents = epsilon * stds + mu
@@ -82,6 +82,26 @@ class VAE(nn.Module):
 
     def _decode(self, z):
         return self.decoder(z)
+
+class SimpleTaskModel(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        self.fc1 = nn.Linear(input_dim, 200)
+        self.fc2 = nn.Linear(200, 200)
+        self.out = nn.Linear(200, output_dim)
+
+
+
+        pass
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        out = F.relu(self.out(x))
+        # make sure to use CELoss
+        return out
+
+
+
+    pass
 
 
 class Discriminator(nn.Module):
