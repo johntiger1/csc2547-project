@@ -71,28 +71,32 @@ def main(args):
     args.cuda = args.cuda and torch.cuda.is_available()
     solver = Solver(args, test_dataloader)
 
-    splits = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
+    splits = [0.1, 0.15]
 
     current_indices = list(initial_indices)
 
     accuracies = []
-    
+
+    # let's say we give it just 10% of the initial dataset, and say the rest was "unlabelled". We will see how it performs
+
     for split in splits:
         # need to retrain all the models on the new images
         # re initialize and retrain the models
-        task_model = vgg.vgg16_bn(num_classes=args.num_classes)
+        # task_model = vgg.vgg16_bn(num_classes=args.num_classes)
+        task_model = model.SimpleTaskModel(args.latent_dim, args.num_classes)
         vae = model.VAE(args.latent_dim)
         discriminator = model.Discriminator(args.latent_dim)
 
+        # OK, so they do actually have a strong separation: we DO keep track of which indices have been sampled so far
         unlabeled_indices = np.setdiff1d(list(all_indices), current_indices)
         unlabeled_sampler = data.sampler.SubsetRandomSampler(unlabeled_indices)
-        unlabeled_dataloader = data.DataLoader(train_dataset, 
+        unlabeled_dataloader = data.DataLoader(train_dataset,
                 sampler=unlabeled_sampler, batch_size=args.batch_size, drop_last=False)
 
         # train the models on the current data
         acc, vae, discriminator = solver.train(querry_dataloader,
-                                               task_model, 
-                                               vae, 
+                                               task_model,
+                                               vae,
                                                discriminator,
                                                unlabeled_dataloader)
 
@@ -103,7 +107,7 @@ def main(args):
         sampled_indices = solver.sample_for_labeling(vae, discriminator, unlabeled_dataloader)
         current_indices = list(current_indices) + list(sampled_indices)
         sampler = data.sampler.SubsetRandomSampler(current_indices)
-        querry_dataloader = data.DataLoader(train_dataset, sampler=sampler, 
+        querry_dataloader = data.DataLoader(train_dataset, sampler=sampler,
                 batch_size=args.batch_size, drop_last=True)
 
     torch.save(accuracies, os.path.join(args.out_path, args.log_name))

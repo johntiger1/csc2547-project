@@ -85,9 +85,9 @@ class VAE(nn.Module):
 
 class SimpleTaskModel(nn.Module):
     def __init__(self, input_dim, output_dim):
-        self.fc1 = nn.Linear(input_dim, 200)
-        self.fc2 = nn.Linear(200, 200)
-        self.out = nn.Linear(200, output_dim)
+        self.fc1 = nn.Linear(input_dim, input_dim*2)
+        self.fc2 = nn.Linear(input_dim*2, input_dim*2)
+        self.out = nn.Linear(input_dim*2, output_dim)
 
 
 
