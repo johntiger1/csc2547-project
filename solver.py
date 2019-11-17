@@ -156,7 +156,7 @@ class Solver:
 
             if iter_count % 1000 == 0:
                 print('Current training iteration: {}'.format(iter_count))
-                print('Current task model loss: {:.4f}'.format(task_loss.item()))
+                # print('Current task model loss: {:.4f}'.format(task_loss.item()))
                 print('Current vae model loss: {:.4f}'.format(total_vae_loss.item()))
                 print('Current discriminator model loss: {:.4f}'.format(dsc_loss.item()))
 
@@ -174,7 +174,10 @@ class Solver:
         # also need to run for several epochs.
 
         NUM_EPOCHS = 25
-        for e in range(NUM_EPOCHS):
+        from tqdm import tqdm
+
+        for e in tqdm(range(NUM_EPOCHS)):
+            total_task_loss = 0
             for i, labeled_data_batch in enumerate(labeled_data):
                 labeled_imgs, labels =  labeled_data_batch
                 # run the encoder VAE to get the labels again ()
@@ -190,10 +193,12 @@ class Solver:
 
                 preds = task_model(X)
                 task_loss = self.ce_loss(preds, labels)
-
+                total_task_loss += task_loss.item()
                 optim_task_model.zero_grad()
                 task_loss.backward()
                 optim_task_model.step()
+
+            print("Loss on epoch {} is {}".format(e, total_task_loss/len(querry_dataloader)))
 
         final_accuracy = self.test(task_model)
 
