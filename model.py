@@ -95,7 +95,7 @@ class SimpleTaskModel(nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        out = F.relu(self.out(x))
+        out = self.out(x)
         # make sure to use CELoss
         return out
 
