@@ -14,7 +14,7 @@ import vgg
 from solver import Solver
 from utils import *
 import arguments
-
+from tqdm import tqdm
 
 def cifar_transformer():
     return transforms.Compose([
@@ -79,7 +79,7 @@ def main(args):
 
     # let's say we give it just 10% of the initial dataset, and say the rest was "unlabelled". We will see how it performs
 
-    for split in splits:
+    for split in tqdm(splits):
         # need to retrain all the models on the new images
         # re initialize and retrain the models
         # task_model = vgg.vgg16_bn(num_classes=args.num_classes)
@@ -115,8 +115,11 @@ def main(args):
 if __name__ == '__main__':
     import datetime
 
+    print("running")
+    print(datetime.datetime.now())
+
     with open("myfile.txt", "w") as file:
-        file.write("starting {}".format( datetime.datetime.now()))
+        file.write("starting {}\n".format( datetime.datetime.now()))
         args = arguments.get_args()
         main(args)
         file.write("Finished it all! {}".format( datetime.datetime.now()))
