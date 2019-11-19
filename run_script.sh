@@ -4,7 +4,7 @@
 #SBATCH -p gpu
 #SBATCH -c 2
 #SBATCH -n 1
-#SBATCH --chdir=./sbatch_run
+#SBATCH --output=sbatch_run.out
 #module load cuda-8.0
 #source ~/anaconda3/bin/activate pytorch
 
