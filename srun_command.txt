@@ -1,4 +1,11 @@
 
 This is NOT an executable file. It is intended to show you how to run it interactively on srun. Otherwise, you can submit the file for batch processing. You should do module loads before you run this (to ensure we have the requisite packages loaded)
 
-srun --gres=gpu:1 -c 8 --mem=12G -p gpu python main.py 
+srun --gres=gpu:1 -c 8 --mem=12G -p gpu python main.py --cuda
+
+additional file run:
+srun --gres=gpu:1 --mem=10G -p gpu --output=my_srun_test.out  python main.py --cuda
+
+Note that if we specify this output flag, then srun will pipe all the output to the file! What we really want is the TEE operator!
+
+srun --gres=gpu:1 --mem=10G -p gpu  python main.py --cuda
