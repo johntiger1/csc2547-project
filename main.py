@@ -114,11 +114,12 @@ def main(args):
 
 if __name__ == '__main__':
     import datetime
-
+    from datetime import date
     print("running")
     print(datetime.datetime.now())
+    print(datetime.date.today())
 
-    with open("myfile.txt", "w") as file:
+    with open("{}_myfile.txt".format(str(date.today())), "a") as file:
         file.write("starting {}\n".format( datetime.datetime.now()))
         args = arguments.get_args()
         main(args)
