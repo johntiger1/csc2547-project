@@ -30,9 +30,9 @@ def main(args):
 
         train_dataset = CIFAR10(args.data_path)
 
-        args.num_images = 50000
-        args.budget = 2500
-        args.initial_budget = 5000
+        args.num_images = 5000 
+        args.budget = 250
+        args.initial_budget = 500
         args.num_classes = 10
     elif args.dataset == 'cifar100':
         test_dataloader = data.DataLoader(
@@ -115,11 +115,12 @@ def main(args):
 if __name__ == '__main__':
     import datetime
     from datetime import date
+
     print("running")
     print(datetime.datetime.now())
     print(datetime.date.today())
 
-    with open("{}_myfile.txt".format(str(date.today())), "a") as file:
+    with open("{}_myfile.txt".format(str(datetime.datetime.now())), "a") as file:
         file.write("starting {}\n".format( datetime.datetime.now()))
         args = arguments.get_args()
         main(args)
