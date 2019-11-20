@@ -31,7 +31,7 @@ class Solver:
                     yield img, label
         else:
             while True:
-                for img, _, _ in dataloader:
+                for img, _, _ in dataloader: #this INFINITELY yields images, interestingly! (oh it just looks around, when it sees everyting!)
                     yield img
 
     '''
@@ -43,6 +43,13 @@ class Solver:
         from tqdm import tqdm
         
         labeled_data = self.read_data(querry_dataloader)
+
+        aa = 0
+        while True:
+            labeled_imgs, labels = next(labeled_data)
+            aa +=1
+            print(aa)
+
         unlabeled_data = self.read_data(unlabeled_dataloader, labels=False)
 
         optim_vae = optim.Adam(vae.parameters(), lr=5e-4)
@@ -184,9 +191,10 @@ class Solver:
 
         total_task_loss = 0
         total_examples = 0
-        for iter_count in tqdm(range(self.args.train_iterations)):
-
-            labeled_imgs, labels =  next(labeled_data)
+        # for iter_count in tqdm(range(self.args.train_iterations)):
+        for labeled_data in tqdm(querry_dataloader):
+            # labeled_imgs, labels =  next(labeled_data)
+            labeled_imgs, labels =  labeled_data
 
             if self.args.cuda:
                 labeled_imgs = labeled_imgs.cuda()
