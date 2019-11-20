@@ -26,16 +26,24 @@ def main(args):
     if args.dataset == 'cifar10':
 
         all_indices = set(np.arange(10000))
-        initial_indices = random.sample(all_indices, 100)
+        initial_indices = random.sample(all_indices, 2000)
         test_sampler = data.sampler.SubsetRandomSampler(initial_indices)
 
 
         test_dataloader = data.DataLoader(
                 datasets.CIFAR10(args.data_path, download=True, transform=cifar_transformer(), train=False),
             batch_size=args.batch_size, drop_last=False, sampler=test_sampler )
+
+        '''
+        The length is still (orig_length)
+        But the times it will iterate through is only #random indices now
+        '''
         # print(len(test_dataloader.dataset))
+        # total = 0
         # for i, batch in enumerate(tqdm(test_dataloader)):
         #     print("good")
+        #     total += len(batch[0])
+        # print("total was {}".format(total))
         # construct a new dataset, from these iterated ones
 
 
@@ -43,7 +51,7 @@ def main(args):
 
         args.num_images = 5000 #a type of curriculum learning could be useful here!
         args.budget = 250
-        args.initial_budget = 500
+        args.initial_budget = 2000
         args.num_classes = 10
     elif args.dataset == 'cifar100':
         test_dataloader = data.DataLoader(
@@ -85,7 +93,7 @@ def main(args):
     args.cuda = args.cuda and torch.cuda.is_available()
     solver = Solver(args, test_dataloader)
 
-    splits = [0.1, 0.15, 0.20, 0.25, 0.30] #splits actually has no effect on anything (just for formatting)!
+    splits = [0.4,0.45,0.5] #splits actually has no effect on anything (just for formatting)!
 
     current_indices = list(initial_indices)
 

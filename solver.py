@@ -44,11 +44,7 @@ class Solver:
         
         labeled_data = self.read_data(querry_dataloader)
 
-        aa = 0
-        while True:
-            labeled_imgs, labels = next(labeled_data)
-            aa +=1
-            print(aa)
+
 
         unlabeled_data = self.read_data(unlabeled_dataloader, labels=False)
 
@@ -186,40 +182,44 @@ class Solver:
         # print(len(querry_dataloader))
         # print(len(labeled_data))
 
-        NUM_EPOCHS = 1
+        NUM_EPOCHS = 25
         from tqdm import tqdm
 
         total_task_loss = 0
         total_examples = 0
         # for iter_count in tqdm(range(self.args.train_iterations)):
-        for labeled_data in tqdm(querry_dataloader):
-            # labeled_imgs, labels =  next(labeled_data)
-            labeled_imgs, labels =  labeled_data
+        for epoch in range(NUM_EPOCHS):
+            for labeled_data in tqdm(querry_dataloader):
+                # labeled_imgs, labels =  next(labeled_data)
+                labeled_imgs, labels,sample_idx =  labeled_data
+                # print(sample_idx)
+                # print(sample_idx.shape)
+                if self.args.cuda:
+                    labeled_imgs = labeled_imgs.cuda()
+                    labels = labels.cuda()
 
-            if self.args.cuda:
-                labeled_imgs = labeled_imgs.cuda()
-                labels = labels.cuda()
 
 
+                recon, z, mu, logvar = vae(labeled_imgs)
 
-            recon, z, mu, logvar = vae(labeled_imgs)
+                # now, we just need to train a classifier on these datapoints; also need to associate the labels then
+                # compute loss
 
-            # now, we just need to train a classifier on these datapoints; also need to associate the labels then
-            # compute loss
+                X = torch.cat((mu, logvar),1) #assuming batch size first, ambient space dimension second
+                y = labels
+                total_examples += len(X)
 
-            X = torch.cat((mu, logvar),1) #assuming batch size first, ambient space dimension second
-            y = labels
-            total_examples += len(X)
+                preds = task_model(X)
+                task_loss = self.ce_loss(preds, labels)
+                total_task_loss += task_loss.item()
+                optim_task_model.zero_grad()
+                task_loss.backward()
+                optim_task_model.step()
 
-            preds = task_model(X)
-            task_loss = self.ce_loss(preds, labels)
-            total_task_loss += task_loss.item()
-            optim_task_model.zero_grad()
-            task_loss.backward()
-            optim_task_model.step()
-
-            if iter_count %100:
-                print("Loss on iter_count {} is {}".format(100*iter_count, total_task_loss/len(total_examples )))
+                # if iter_count %100:
+                #     print("Loss on iter_count {} is {}".format(100*iter_count, total_task_loss/len(total_examples )))
+                # if iter_count %100:
+            # print("Loss on epoch {} is {}".format(epoch, total_task_loss/total_examples ))
 
         final_accuracy = self.test_via_embedding(task_model, vae)
 
@@ -246,8 +246,8 @@ class Solver:
                 imgs = imgs.cuda()
 
             with torch.no_grad():
-                print("calling the test func")
-                print(imgs.shape)
+                # print("calling the test func")
+                # print(imgs.shape)
                 recon, z, mu, logvar = vae(imgs)
                 X = torch.cat((mu, logvar), 1)  # assuming batch size first, ambient space dimension second
                 y = labels
@@ -256,7 +256,7 @@ class Solver:
             preds = torch.argmax(preds, dim=1).cpu().numpy()
             correct += accuracy_score(labels, preds, normalize=False)
             total += imgs.size(0)
-            print(total)
+            # print(total)
         return correct / total * 100
 
 
@@ -268,8 +268,8 @@ class Solver:
                 imgs = imgs.cuda()
 
             with torch.no_grad():
-                print("calling the test func")
-                print(imgs.shape)
+                # print("calling the test func")
+                # print(imgs.shape)
                 preds = task_model(imgs)
 
             preds = torch.argmax(preds, dim=1).cpu().numpy()
