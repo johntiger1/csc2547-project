@@ -11,7 +11,6 @@ import sampler
 
 
 
-
 class Solver:
     def __init__(self, args, test_dataloader):
         self.args = args
@@ -40,6 +39,8 @@ class Solver:
     We can also: train this jointly. But that can be investigated later
     '''
     def train(self, querry_dataloader, task_model, vae, discriminator, unlabeled_dataloader):
+        from tqdm import tqdm
+        
         labeled_data = self.read_data(querry_dataloader)
         unlabeled_data = self.read_data(unlabeled_dataloader, labels=False)
 
@@ -58,8 +59,8 @@ class Solver:
         
         change_lr_iter = self.args.train_iterations // 25
 
-        for iter_count in range(self.args.train_iterations):
-            if iter_count is not 0 and iter_count % change_lr_iter == 0:
+        for iter_count in tqdm(range(self.args.train_iterations)):
+            if iter_count is not 0:# and iter_count % change_lr_iter == 0:
                 for param in optim_vae.param_groups:
                     param['lr'] = param['lr'] * 0.9
     
@@ -85,7 +86,9 @@ class Solver:
             # optim_task_model.step()
 
             # VAE step
-            for count in range(self.args.num_vae_steps):
+            for count in (range(self.args.num_vae_steps)):
+                print("originally {}".format(labeled_imgs.size()))
+                print("originally {}".format(labeled_imgs.size()))
                 recon, z, mu, logvar = vae(labeled_imgs)
                 unsup_loss = self.vae_loss(labeled_imgs, recon, mu, logvar, self.args.beta)
                 unlab_recon, unlab_z, unlab_mu, unlab_logvar = vae(unlabeled_imgs)
@@ -120,7 +123,7 @@ class Solver:
                         labels = labels.cuda()
 
             # Discriminator step
-            for count in range(self.args.num_adv_steps):
+            for count in (range(self.args.num_adv_steps)):
                 with torch.no_grad():
                     _, _, mu, _ = vae(labeled_imgs)
                     _, _, unlab_mu, _ = vae(unlabeled_imgs)
@@ -164,9 +167,9 @@ class Solver:
 
         labeled_data = self.read_data(querry_dataloader)
 
-        for i, labeled_data_batch in enumerate(labeled_data ): # just need to encode these guys
-            labeled_imgs, labels =  labeled_data_batch
-            recon, z, mu, logvar = vae(labeled_imgs)
+        # for i, labeled_data_batch in enumerate(labeled_data ): # just need to encode these guys
+        #     labeled_imgs, labels =  labeled_data_batch
+        #     recon, z, mu, logvar = vae(labeled_imgs)
             # we can easily just do the inference here, and then keep doing this in turn
 
 
@@ -179,8 +182,23 @@ class Solver:
         for e in tqdm(range(NUM_EPOCHS)):
             total_task_loss = 0
             for i, labeled_data_batch in enumerate(labeled_data):
+
+                print("The size is {}".format(len(labeled_data_batch)))
+                # print(labeled_data_batch)
+
+                # print(labeled_data_batch.shape)
+
                 labeled_imgs, labels =  labeled_data_batch
+
+                if self.args.cuda:
+                    labeled_imgs = labeled_imgs.cuda()
+                    labels = labels.cuda()
+
+                print("now the size is {}".format(labeled_imgs.shape))
+
+
                 # run the encoder VAE to get the labels again ()
+                print("about to run the VAE!!")
                 recon, z, mu, logvar = vae(labeled_imgs)
 
                 print(mu.shape, logvar.size())

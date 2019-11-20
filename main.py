@@ -30,7 +30,7 @@ def main(args):
 
         train_dataset = CIFAR10(args.data_path)
 
-        args.num_images = 5000 
+        args.num_images = 5000 #a type of curriculum learning could be useful here!
         args.budget = 250
         args.initial_budget = 500
         args.num_classes = 10
@@ -71,7 +71,7 @@ def main(args):
     args.cuda = args.cuda and torch.cuda.is_available()
     solver = Solver(args, test_dataloader)
 
-    splits = [0.1, 0.15]
+    splits = [0.1, 0.15] #splits actually has no effect on anything (just for formatting)!
 
     current_indices = list(initial_indices)
 
@@ -83,7 +83,7 @@ def main(args):
         # need to retrain all the models on the new images
         # re initialize and retrain the models
         # task_model = vgg.vgg16_bn(num_classes=args.num_classes)
-        task_model = model.SimpleTaskModel(args.latent_dim, args.num_classes)
+        task_model = model.SimpleTaskModel(args.latent_dim*2, args.num_classes) # 2 for the different params (variance, mean); you are trying to predict
         vae = model.VAE(args.latent_dim)
         discriminator = model.Discriminator(args.latent_dim)
 
