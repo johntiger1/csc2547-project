@@ -15,7 +15,8 @@ class Solver:
     def __init__(self, args, test_dataloader):
         self.args = args
         self.test_dataloader = test_dataloader
-
+        # print(len(self.test_dataloader))
+        # exit(len(self.test_dataloader))
         self.bce_loss = nn.BCELoss()
         self.mse_loss = nn.MSELoss()
         self.ce_loss = nn.CrossEntropyLoss()
@@ -87,7 +88,7 @@ class Solver:
 
             # VAE step
             for count in (range(self.args.num_vae_steps)):
-                
+
                 recon, z, mu, logvar = vae(labeled_imgs)
                 unsup_loss = self.vae_loss(labeled_imgs, recon, mu, logvar, self.args.beta)
                 unlab_recon, unlab_z, unlab_mu, unlab_logvar = vae(unlabeled_imgs)
@@ -175,39 +176,44 @@ class Solver:
         # train the task model on the embeddings (of the labelled data)
         # also need to run for several epochs.
 
+        # print(len(querry_dataloader))
+        # print(len(labeled_data))
+
         NUM_EPOCHS = 1
         from tqdm import tqdm
 
-        for e in tqdm(range(NUM_EPOCHS)):
-            total_task_loss = 0
-            for i, labeled_data_batch in enumerate(labeled_data):
+        total_task_loss = 0
+        total_examples = 0
+        for iter_count in tqdm(range(self.args.train_iterations)):
 
-                labeled_imgs, labels =  labeled_data_batch
+            labeled_imgs, labels =  next(labeled_data)
 
-                if self.args.cuda:
-                    labeled_imgs = labeled_imgs.cuda()
-                    labels = labels.cuda()
+            if self.args.cuda:
+                labeled_imgs = labeled_imgs.cuda()
+                labels = labels.cuda()
 
 
 
-                recon, z, mu, logvar = vae(labeled_imgs)
+            recon, z, mu, logvar = vae(labeled_imgs)
 
-                # now, we just need to train a classifier on these datapoints; also need to associate the labels then
-                # compute loss
+            # now, we just need to train a classifier on these datapoints; also need to associate the labels then
+            # compute loss
 
-                X = torch.cat((mu, logvar),1) #assuming batch size first, ambient space dimension second
-                y = labels
+            X = torch.cat((mu, logvar),1) #assuming batch size first, ambient space dimension second
+            y = labels
+            total_examples += len(X)
 
-                preds = task_model(X)
-                task_loss = self.ce_loss(preds, labels)
-                total_task_loss += task_loss.item()
-                optim_task_model.zero_grad()
-                task_loss.backward()
-                optim_task_model.step()
+            preds = task_model(X)
+            task_loss = self.ce_loss(preds, labels)
+            total_task_loss += task_loss.item()
+            optim_task_model.zero_grad()
+            task_loss.backward()
+            optim_task_model.step()
 
-            print("Loss on epoch {} is {}".format(e, total_task_loss/len(querry_dataloader)))
+            if iter_count %100:
+                print("Loss on iter_count {} is {}".format(100*iter_count, total_task_loss/len(total_examples )))
 
-        final_accuracy = self.test(task_model)
+        final_accuracy = self.test_via_embedding(task_model, vae)
 
 
 
@@ -221,7 +227,30 @@ class Solver:
                                              self.args.cuda)
 
         return querry_indices
-                
+
+
+    def test_via_embedding(self, task_model, vae):
+        task_model.eval()
+        vae.eval()
+        total, correct = 0, 0
+        for imgs, labels in self.test_dataloader:
+            if self.args.cuda:
+                imgs = imgs.cuda()
+
+            with torch.no_grad():
+                print("calling the test func")
+                print(imgs.shape)
+                recon, z, mu, logvar = vae(imgs)
+                X = torch.cat((mu, logvar), 1)  # assuming batch size first, ambient space dimension second
+                y = labels
+                preds = task_model(X)
+
+            preds = torch.argmax(preds, dim=1).cpu().numpy()
+            correct += accuracy_score(labels, preds, normalize=False)
+            total += imgs.size(0)
+            print(total)
+        return correct / total * 100
+
 
     def test(self, task_model):
         task_model.eval()
@@ -231,6 +260,8 @@ class Solver:
                 imgs = imgs.cuda()
 
             with torch.no_grad():
+                print("calling the test func")
+                print(imgs.shape)
                 preds = task_model(imgs)
 
             preds = torch.argmax(preds, dim=1).cpu().numpy()

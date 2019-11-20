@@ -24,9 +24,20 @@ def cifar_transformer():
 
 def main(args):
     if args.dataset == 'cifar10':
+
+        all_indices = set(np.arange(10000))
+        initial_indices = random.sample(all_indices, 100)
+        test_sampler = data.sampler.SubsetRandomSampler(initial_indices)
+
+
         test_dataloader = data.DataLoader(
                 datasets.CIFAR10(args.data_path, download=True, transform=cifar_transformer(), train=False),
-            batch_size=args.batch_size, drop_last=False)
+            batch_size=args.batch_size, drop_last=False, sampler=test_sampler )
+        # print(len(test_dataloader.dataset))
+        # for i, batch in enumerate(tqdm(test_dataloader)):
+        #     print("good")
+        # construct a new dataset, from these iterated ones
+
 
         train_dataset = CIFAR10(args.data_path)
 
@@ -67,11 +78,14 @@ def main(args):
     # dataset with labels available
     querry_dataloader = data.DataLoader(train_dataset, sampler=sampler, 
             batch_size=args.batch_size, drop_last=True)
+
+    # print("in main")
+    # print(len(querry_dataloader.dataset))
             
     args.cuda = args.cuda and torch.cuda.is_available()
     solver = Solver(args, test_dataloader)
 
-    splits = [0.1, 0.15] #splits actually has no effect on anything (just for formatting)!
+    splits = [0.1, 0.15, 0.20, 0.25, 0.30] #splits actually has no effect on anything (just for formatting)!
 
     current_indices = list(initial_indices)
 
@@ -118,7 +132,7 @@ if __name__ == '__main__':
 
     print("running")
     print(datetime.datetime.now())
-    print(datetime.date.today())
+    # print(datetime.date.today())
 
     with open("{}_myfile.txt".format(str(datetime.datetime.now())), "a") as file:
         file.write("starting {}\n".format( datetime.datetime.now()))
