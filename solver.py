@@ -60,7 +60,7 @@ class Solver:
         change_lr_iter = self.args.train_iterations // 25
 
         for iter_count in tqdm(range(self.args.train_iterations)):
-            if iter_count is not 0:# and iter_count % change_lr_iter == 0:
+            if iter_count is not 0 and iter_count % change_lr_iter == 0:
                 for param in optim_vae.param_groups:
                     param['lr'] = param['lr'] * 0.9
     
@@ -176,17 +176,12 @@ class Solver:
         # train the task model on the embeddings (of the labelled data)
         # also need to run for several epochs.
 
-        NUM_EPOCHS = 25
+        NUM_EPOCHS = 1
         from tqdm import tqdm
 
         for e in tqdm(range(NUM_EPOCHS)):
             total_task_loss = 0
             for i, labeled_data_batch in enumerate(labeled_data):
-
-                print("The size is {}".format(len(labeled_data_batch)))
-                # print(labeled_data_batch)
-
-                # print(labeled_data_batch.shape)
 
                 labeled_imgs, labels =  labeled_data_batch
 
@@ -194,14 +189,9 @@ class Solver:
                     labeled_imgs = labeled_imgs.cuda()
                     labels = labels.cuda()
 
-                print("now the size is {}".format(labeled_imgs.shape))
 
 
-                # run the encoder VAE to get the labels again ()
-                print("about to run the VAE!!")
                 recon, z, mu, logvar = vae(labeled_imgs)
-
-                print(mu.shape, logvar.size())
 
                 # now, we just need to train a classifier on these datapoints; also need to associate the labels then
                 # compute loss
