@@ -87,8 +87,7 @@ class Solver:
 
             # VAE step
             for count in (range(self.args.num_vae_steps)):
-                print("originally {}".format(labeled_imgs.size()))
-                print("originally {}".format(labeled_imgs.size()))
+                
                 recon, z, mu, logvar = vae(labeled_imgs)
                 unsup_loss = self.vae_loss(labeled_imgs, recon, mu, logvar, self.args.beta)
                 unlab_recon, unlab_z, unlab_mu, unlab_logvar = vae(unlabeled_imgs)
